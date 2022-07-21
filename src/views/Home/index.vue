@@ -25,7 +25,7 @@
             :key="item.id"
           >
             <template #title>
-              <i class="el-icon-s-custom"></i>
+              <i :class="icons[item.id]"></i>
               <span>{{ item.authName }}</span>
             </template>
             <el-menu-item
@@ -54,11 +54,19 @@ export default {
   created() {
     this.getMenuList();
   },
+
   data() {
     return {
       // 是否折叠菜单栏
       isCollapse: false,
       menuList: [],
+      icons: {
+        125: "iconfont icon-user1",
+        103: "iconfont icon-tijikongjian",
+        101: "iconfont icon-shangpin",
+        102: "iconfont icon-danju",
+        145: "iconfont icon-baobiao",
+      },
     };
   },
   methods: {
@@ -133,5 +141,8 @@ export default {
 }
 .el-menu-item {
   color: red;
+}
+.iconfont {
+  margin-right: 10px;
 }
 </style>

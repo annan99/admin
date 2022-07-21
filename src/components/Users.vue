@@ -8,18 +8,21 @@
     </el-breadcrumb>
 
     <!-- 卡片 -->
-    <el-card class="box-card">
+    <el-card class="box-card" style="margin-top: 15px">
       <div slot="header" class="clearfix">
         <div style="margin-top: 15px; float: left">
           <el-input
             placeholder="请输入内容"
-            v-model="input"
+            v-model="users.query"
             class="input-with-select"
+            clearable
           >
-            <el-button slot="append" icon="el-icon-search"></el-button>
+            <el-button slot="append" icon="el-icon-search" @click="getUsers"></el-button>
           </el-input>
         </div>
-        <el-button type="primary">主要按钮</el-button>
+        <el-button type="primary" @click="dialogFormVisible = true"
+          >添加用户</el-button
+        >
       </div>
 
       <!-- table表格 -->
@@ -41,13 +44,13 @@
         </el-table-column>
         <el-table-column label="操作">
           <template v-slot="scope">
-            <el-button type="primary" icon="el-icon-edit"></el-button>
+            <el-button type="primary" icon="el-icon-edit" @click="editDialog(scope.row)"></el-button>
             <el-button
               type="danger"
               icon="el-icon-delete"
               @click="del(scope.row.id)"
             ></el-button>
-            <el-button type="warning" icon="el-icon-setting"></el-button>
+            <el-button type="warning" icon="el-icon-setting" @click="Jurisdiction(scope.row)"></el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -62,11 +65,66 @@
       >
       </el-pagination>
     </el-card>
+    <el-dialog title="添加用户对话框" :visible.sync="dialogFormVisible" @close="resetForm">
+      <el-form label-width="100px" :model="dataObj" :rules="rules" ref="formRef">
+        <el-form-item label="用户名" prop="username">
+          <el-input style="width: 90%" v-model="dataObj.username"></el-input>
+        </el-form-item>
+        <el-form-item label="密码" prop="password">
+          <el-input style="width: 90%" v-model="dataObj.password"></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input style="width: 90%" v-model="dataObj.email"></el-input>
+        </el-form-item>
+        <el-form-item label="手机号" prop="mobile">
+          <el-input style="width: 90%" v-model="dataObj.mobile"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="dialogFormVisible = false">取 消</el-button>
+        <el-button type="primary" @click="onSubmit">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!-- 编辑 -->
+    <el-dialog title="编辑用户" :visible.sync="editDialogVisible">
+      <el-form label-width="100px" :model="editObj" :rules="rules">
+        <el-form-item label="用户名">
+          <el-input v-model="editObj.username" style="width:90%" disabled></el-input>
+        </el-form-item>
+        <el-form-item label="邮箱" prop="email">
+          <el-input v-model="editObj.email" style="width:90%"></el-input>
+        </el-form-item>
+        <el-form-item label="手机号" prop="mobile">
+          <el-input v-model="editObj.mobile" style="width:90%"></el-input>
+        </el-form-item>
+      </el-form>
+      <div slot="footer">
+        <el-button @click="editDialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="btn">确 定</el-button>
+      </div>
+    </el-dialog>
+    <!-- 分配权限 -->
+    <el-dialog title="分配角色" :visible.sync="dialogJurisdiction">
+     <div>
+      <p>当前的用户：{{roles.username}}</p>
+      <p>当前的角色：{{roles.role_name}}</p>
+      <p>分配新角色：
+        <el-select v-model="roleId" placeholder="请选择">
+          <el-option v-for="item in rolesList" :key="item.id" :label="item.roleName" :value="item.id">
+        </el-option>
+  </el-select>
+      </p>
+     </div>
+  <div slot="footer">
+    <el-button @click="dialogJurisdiction = false">取 消</el-button>
+    <el-button type="primary" @click="button">确 定</el-button>
+  </div>
+</el-dialog>
   </div>
 </template>
 
 <script>
-import { getUsers, delUser, updateState } from "@/api/users";
+import { getUsers, delUser, updateState, addUsers, editUsers,getRoles,putRoles} from "@/api/users";
 
 export default {
   created() {
@@ -84,6 +142,35 @@ export default {
       total: null,
       uId: 0,
       type: false,
+      dialogFormVisible: false,
+      dataObj: {
+        username: "",
+        password: "",
+        email: "",
+        mobile: "",
+      },
+      rules: {
+        username: [
+          { required: true, message: "请输入用户名", trigger: "blur" },
+        ],
+        password: [{ required: true, message: "请输入密码", trigger: "blur" }],
+        email: [{ required: true, message: "请输入邮箱", trigger: "blur" }],
+        mobile: [{ required: true, message: "请输入手机号", trigger: "blur" }],
+      },
+      editDialogVisible:false,
+      editObj:{
+        id:'',
+        email:'',
+        mobile:'',
+      },
+      dialogJurisdiction:false,
+      roles:{},
+      rolesList:[],
+      roleId:'',
+  
+        id:'',
+        rid:'',
+      
     };
   },
   methods: {
@@ -132,6 +219,46 @@ export default {
         console.log(err);
       }
     },
+    async onSubmit() {
+      try {
+        await addUsers(this.dataObj);
+        this.getUsers();
+        this.dialogFormVisible = false;
+        this.$message.success('添加成功')
+      } catch (err) {
+        console.log(err);
+      }
+      },
+    resetForm(){
+      this.$refs.formRef.resetFields()
+    },
+    editDialog(row){
+      this.editObj = { ...row }
+      this.editDialogVisible=true
+    },
+    async btn(){
+       await editUsers(this.editObj)
+        this.getUsers();
+       this.editDialogVisible = false
+    },
+    async  Jurisdiction(row){
+      this.roles={...row}
+      const res=await getRoles()
+      // console.log(res);
+      this.rolesList=res.data.data
+      this.dialogJurisdiction=true
+    },
+    async button(){
+      try{
+       const res5=await putRoles({id:this.roles.id,rid:this.roleId})
+       console.log(res5);
+      //  this.getUsers()
+      //  this.dialogJurisdiction=false
+      }catch(err){
+        console.log(err);
+      }
+      
+    }
   },
 };
 </script>
@@ -170,11 +297,14 @@ export default {
   width: 25vw;
 }
 .el-button {
-  float: left;
+  // float: left;
   margin-top: 15px;
   margin-left: 20px;
 }
 .el-table {
   margin-bottom: 20px;
+}
+.el-dialog {
+  padding: 0;
 }
 </style>

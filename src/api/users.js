@@ -46,3 +46,79 @@ export const updateState=({uId,type})=>{
         }
     })
 }
+
+
+/**
+ * 添加用户
+ * @param {*} param0 
+ * @returns 
+ */
+export const addUsers=({username,password,email,mobile})=>{
+    return request({
+        method:'POST',
+        url:'users',
+        data:{
+            username,
+            password,
+            email,
+            mobile
+        }
+    })
+}
+
+/**
+ * 根据id查询用户信息
+ * @param {*} id 
+ * @returns 
+ */
+export const getUsersInfo=(id)=>{
+    return request({
+        method:'GET',
+        url:`users/${id}`,
+        params:{
+            id
+        }
+    })
+}
+
+/**
+ * 编辑用户信息
+ * @param {*} param0 
+ * @returns 
+ */
+export const editUsers=({id,email,mobile})=>{
+    return request({
+        method:'PUT',
+        url:`users/${id}`,
+        data:{id,email,mobile}
+    })
+}
+
+
+/**
+ * 获取分配列表
+ * @param {} param0 
+ * @returns 
+ */
+export const getRoles=()=>{
+    return request({
+        method:'GET',
+        url:'roles'
+    })
+}
+
+/**
+ * 分配新角色
+ * @param {用户id  角色id} param0 
+ * @returns 
+ */
+export const putRoles=({id,rid})=>{
+    return request({
+        method:'PUT',
+        url:`users/${id}/role`,
+        data:{
+            id,
+            rid
+        }
+    })
+}
